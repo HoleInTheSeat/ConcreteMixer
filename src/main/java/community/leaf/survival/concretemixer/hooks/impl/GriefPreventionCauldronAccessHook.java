@@ -17,6 +17,7 @@ import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Item;
 import org.bukkit.plugin.Plugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
@@ -58,6 +59,12 @@ public class GriefPreventionCauldronAccessHook implements CauldronAccessHook {
 	@Override
 	public boolean isEnabled() {
 		return griefPreventionVersion.greaterThanOrEqualTo(MINIMUM_VERSION);
+	}
+	
+	@Override
+	public boolean isCauldronAccessibleToItem(Item item, Block cauldron) {
+		// No player identity is available to authorize access to a claim.
+		return GriefPrevention.instance.dataStore.getClaimAt(cauldron.getLocation(), false, null) == null;
 	}
 	
 	@Override

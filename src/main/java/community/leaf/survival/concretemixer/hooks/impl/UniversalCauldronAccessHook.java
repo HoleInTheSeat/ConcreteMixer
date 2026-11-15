@@ -12,6 +12,8 @@ import community.leaf.survival.concretemixer.ConcreteMixerPlugin;
 import community.leaf.survival.concretemixer.hooks.CauldronAccessHook;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
 
 public class UniversalCauldronAccessHook implements CauldronAccessHook {
@@ -43,11 +45,16 @@ public class UniversalCauldronAccessHook implements CauldronAccessHook {
 		return plugin.events().call(new LevelChangeTestEvent(player, cauldron)).allowed;
 	}
 	
+	@Override
+	public boolean isCauldronAccessibleToItem(Item item, Block cauldron) {
+		return plugin.events().call(new LevelChangeTestEvent(item, cauldron)).allowed;
+	}
+	
 	private static class LevelChangeTestEvent extends CauldronLevelChangeEvent {
 		private boolean allowed = false;
 		
-		LevelChangeTestEvent(Player player, Block cauldron) {
-			super(cauldron, player, ChangeReason.BOTTLE_FILL, cauldron.getState());
+		LevelChangeTestEvent(Entity actor, Block cauldron) {
+			super(cauldron, actor, ChangeReason.BOTTLE_FILL, cauldron.getState());
 		}
 		
 		void complete() {

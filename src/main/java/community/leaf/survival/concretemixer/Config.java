@@ -59,6 +59,16 @@ public class Config extends YamlDataFile {
 			)
 			.defaults(false);
 	
+	public static final DefaultYamlValue<Boolean> ALLOW_NON_PLAYER_ITEMS =
+		YamlValue.ofBoolean("cauldrons.allow-non-player-items")
+			.comments(
+				"Allow loose powder from droppers, dispensers, broken containers, and other non-player sources?",
+				"Player drops still require the configured player permission.",
+				"Non-player items cannot use GriefPrevention claimed cauldrons when water is consumed.",
+				"Shulker contents are eligible only after Minecraft spills them into the world."
+			)
+			.defaults(false);
+	
 	public static final DefaultYamlValue<Boolean> LOWER_WATER_LEVEL =
 		YamlValue.ofBoolean("cauldrons.lower-water-level")
 			.comments(

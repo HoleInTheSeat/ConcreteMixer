@@ -25,6 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
 import org.bukkit.event.entity.ItemMergeEvent;
+import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
@@ -56,7 +57,7 @@ public class CauldronPowderDropListener implements Listener {
 		}
 	}
 	
-	@EventListener
+	@EventListener(ListenerOrder.MONITOR)
 	@CancelledEvents(CancellationPolicy.REJECT)
 	public void onPlayerDropItem(PlayerDropItemEvent event) {
 		Player player = event.getPlayer();
@@ -69,8 +70,29 @@ public class CauldronPowderDropListener implements Listener {
 			return;
 		}
 		
+		// Establish the source before any deferred item-spawn handling runs.
+		item.setThrower(player.getUniqueId());
 		ConcreteDebug.debugItem("Player drop", item);
 		transformConcretePowder(item);
+	}
+	
+	@EventListener(ListenerOrder.MONITOR)
+	@CancelledEvents(CancellationPolicy.REJECT)
+	public void onItemSpawn(ItemSpawnEvent event) {
+		if (!plugin.config().getOrDefault(Config.ALLOW_NON_PLAYER_ITEMS)) {
+			return;
+		}
+		Item item = event.getEntity();
+		if (Concrete.ofPowder(item.getItemStack().getType()).isEmpty()) {
+			return;
+		}
+		// PlayerDropItemEvent and thrower assignment may happen after ItemSpawnEvent.
+		// Wait until the spawn has finished, then exclude all player-thrown items.
+		plugin.getServer().getScheduler().runTask(plugin, () -> {
+			if (item.isValid() && item.getThrower() == null) {
+				transformConcretePowder(item);
+			}
+		});
 	}
 	
 	@EventListener(ListenerOrder.MONITOR)
@@ -139,7 +161,23 @@ public class CauldronPowderDropListener implements Listener {
 		return (uuid == null) ? null : plugin.getServer().getEntity(uuid);
 	}
 	
+	private boolean isSourceAllowed(Item item) {
+		UUID thrower = item.getThrower();
+		if (thrower == null) {
+			return plugin.config().getOrDefault(Config.ALLOW_NON_PLAYER_ITEMS);
+		}
+		return entity(thrower) instanceof Player player
+			&& plugin.permissions().allowsConvertingConcretePowder(player);
+	}
+	
 	private void transformConcretePowder(Item item) {
+		// PlayerDropItemEvent can run before the entity is added to the world.
+		// Check validity in the scheduled task, rather than rejecting that event here.
+		if (Concrete.ofPowder(item.getItemStack().getType()).isEmpty()
+			|| !isSourceAllowed(item) || transformationTasksByItemUuid.containsKey(item.getUniqueId())) {
+			return;
+		}
+
 		class IterationCounter {
 			int outside = 0;
 			int inside = 0;
@@ -151,7 +189,8 @@ public class CauldronPowderDropListener implements Listener {
 			item.getUniqueId(),
 			plugin.sync().delay(2).ticks().every(2).ticks().run(task ->
 			{
-				if (!item.isValid() || Concrete.ofPowder(item.getItemStack().getType()).isEmpty()) {
+				if (!item.isValid() || Concrete.ofPowder(item.getItemStack().getType()).isEmpty()
+					|| !isSourceAllowed(item)) {
 					cancel(item, task);
 					return;
 				}
@@ -177,8 +216,11 @@ public class CauldronPowderDropListener implements Listener {
 				
 				// Check if player is allowed to use this specific cauldron
 				// (only if water level gets lowered, since that could be considered griefing)
-				if (lowerWaterLevel && entity(item.getThrower()) instanceof Player player) {
-					if (!plugin.permissions().canAccessCauldron(player, cauldron)) {
+				if (lowerWaterLevel) {
+					boolean allowed = entity(item.getThrower()) instanceof Player player
+						? plugin.permissions().canAccessCauldron(player, cauldron)
+						: plugin.hooks().isCauldronAccessibleToItem(item, cauldron);
+					if (!allowed) {
 						cancel(item, task);
 						return;
 					}

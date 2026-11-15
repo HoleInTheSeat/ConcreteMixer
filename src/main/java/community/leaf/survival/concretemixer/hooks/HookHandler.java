@@ -12,6 +12,7 @@ import community.leaf.survival.concretemixer.hooks.impl.GriefPreventionCauldronA
 import community.leaf.survival.concretemixer.hooks.impl.UniversalCauldronAccessHook;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Item;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,21 @@ public class HookHandler implements CauldronAccessHook {
 			}
 		}
 		
+		return true;
+	}
+	
+	@Override
+	public boolean isCauldronAccessibleToItem(Item item, Block cauldron) {
+		for (RegisteredHook<CauldronAccessHook> hook : cauldronAccessHooks) {
+			try {
+				if (hook.isEnabled() && !hook.get().isCauldronAccessibleToItem(item, cauldron)) {
+					return false;
+				}
+			} catch (RuntimeException e) {
+				plugin.getLogger().log(Level.WARNING, hook.name(), e);
+				return false;
+			}
+		}
 		return true;
 	}
 	
