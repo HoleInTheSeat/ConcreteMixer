@@ -1,9 +1,8 @@
-name: Build
+name: Build and release
 
 on:
   push:
-  pull_request:
-  workflow_dispatch:
+    tags: ['[0-9]*.[0-9]*.[0-9]*']
 
 permissions:
   contents: read
@@ -20,11 +19,55 @@ jobs:
           java-version: '25'
           cache: maven
 
+      - name: Check release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import xml.etree.ElementTree as ET
+          root = ET.parse('pom.xml').getroot()
+          version = root.findtext('{http://maven.apache.org/POM/4.0.0}version')
+          tag = os.environ['RELEASE_TAG']
+          if not re.fullmatch(r'[1-9][0-9]*\.[0-9]+\.[1-9][0-9]*', tag):
+              raise SystemExit('Use a tag like 26.3.1, without a v prefix.')
+          if tag != version:
+              raise SystemExit('Release tag must match pom.xml: ' + version)
+          api = '.'.join(tag.split('.')[:2])
+          descriptor = open('src/main/resources/plugin.yml').read()
+          declared = re.search(r"(?m)^api-version:\s*['\"]?([0-9]+\.[0-9]+)['\"]?\s*$", descriptor)
+          if declared is None or declared.group(1) != api:
+              raise SystemExit('plugin.yml api-version must be ' + api)
+          PY
+
       - name: Build and verify
         run: mvn --batch-mode --no-transfer-progress license:format clean verify
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ConcreteMixer-CraftBukkit-26.3
-          path: target/ConcreteMixer-1.2.2-craftbukkit26.3.jar
+          name: ConcreteMixer-${{ github.ref_name }}
+          path: target/ConcreteMixer-*.jar
           if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ConcreteMixer-${{ github.ref_name }}
+          path: dist
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/*.jar \
+            --verify-tag \
+            --title "ConcreteMixer $RELEASE_TAG" \
+            --generate-notes
