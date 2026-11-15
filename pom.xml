@@ -6,7 +6,7 @@
   
   <groupId>community.leaf.survival</groupId>
   <artifactId>concretemixer</artifactId>
-  <version>1.2.2-craftbukkit26.3</version>
+  <version>26.3.1</version>
   
   <name>ConcreteMixer</name>
   <inceptionYear>2022</inceptionYear>
