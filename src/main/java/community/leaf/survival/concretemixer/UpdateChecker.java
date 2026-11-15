@@ -13,7 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.uwyn.urlencoder.UrlEncoder;
-import community.leaf.evergreen.bukkit.versions.MinecraftVersion;
+import community.leaf.survival.concretemixer.util.GameVersions;
 import community.leaf.survival.concretemixer.util.Strings;
 import community.leaf.survival.concretemixer.util.Versions;
 import community.leaf.tasks.TaskContext;
@@ -52,9 +52,9 @@ public class UpdateChecker {
 			plugin.getServer().getName(), plugin.getServer().getVersion()
 		);
 		
-		String fullGameVersion = MinecraftVersion.server().toString();
-		String majorGameVersion = fullGameVersion.substring(0, fullGameVersion.lastIndexOf('.'));
-		this.modrinthProjectVersionsUri = modrinthProjectVersions(List.of(fullGameVersion, majorGameVersion));
+		this.modrinthProjectVersionsUri = modrinthProjectVersions(
+			GameVersions.fromBukkitVersion(plugin.getServer().getBukkitVersion())
+		);
 		
 		reload();
 	}

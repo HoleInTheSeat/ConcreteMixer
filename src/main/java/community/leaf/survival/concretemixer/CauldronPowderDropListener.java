@@ -79,7 +79,9 @@ public class CauldronPowderDropListener implements Listener {
 		Item aggregate = event.getTarget();
 		Item piece = event.getEntity();
 		
-		if (cancelExistingTransformation(aggregate) || cancelExistingTransformation(piece)) {
+		boolean aggregateTracked = cancelExistingTransformation(aggregate);
+		boolean pieceTracked = cancelExistingTransformation(piece);
+		if (aggregateTracked || pieceTracked) {
 			// Merge thrower information too.
 			if (aggregate.getThrower() == null) {
 				aggregate.setThrower(piece.getThrower());
@@ -149,6 +151,11 @@ public class CauldronPowderDropListener implements Listener {
 			item.getUniqueId(),
 			plugin.sync().delay(2).ticks().every(2).ticks().run(task ->
 			{
+				if (!item.isValid() || Concrete.ofPowder(item.getItemStack().getType()).isEmpty()) {
+					cancel(item, task);
+					return;
+				}
+				
 				Block cauldron = item.getLocation().getBlock();
 				Material material = item.getItemStack().getType();
 				

@@ -16,6 +16,7 @@ import community.leaf.configvalues.bukkit.data.Load;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.configvalues.bukkit.migrations.Migration;
 import community.leaf.survival.concretemixer.util.Versions;
+import community.leaf.survival.concretemixer.util.Sounds;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import pl.tlinkowski.annotation.basic.NullOr;
@@ -79,7 +80,7 @@ public class Config extends YamlDataFile {
 		YamlValue.ofBoolean("effects.splash.sound.enabled").defaults(true);
 	
 	public static final DefaultYamlValue<Sound> SPLASH_SOUND_EFFECT_NAME =
-		YamlValue.ofSound("effects.splash.sound.name").defaults(Sound.ENTITY_GENERIC_SPLASH);
+		YamlValue.of("effects.splash.sound.name", Sounds.YAML).defaults(Sound.ENTITY_GENERIC_SPLASH);
 	
 	public static final DefaultYamlValue<Float> SPLASH_SOUND_EFFECT_VOLUME =
 		YamlValue.ofFloat("effects.splash.sound.volume").defaults(0.75F);
@@ -94,7 +95,7 @@ public class Config extends YamlDataFile {
 		YamlValue.ofBoolean("effects.transform.sound.enabled").defaults(true);
 	
 	public static final DefaultYamlValue<Sound> TRANSFORM_SOUND_EFFECT_NAME =
-		YamlValue.ofSound("effects.transform.sound.name").defaults(Sound.BLOCK_FIRE_EXTINGUISH);
+		YamlValue.of("effects.transform.sound.name", Sounds.YAML).defaults(Sound.BLOCK_FIRE_EXTINGUISH);
 	
 	public static final DefaultYamlValue<Float> TRANSFORM_SOUND_EFFECT_VOLUME =
 		YamlValue.ofFloat("effects.transform.sound.volume").defaults(0.65F);
