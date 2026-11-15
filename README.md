@@ -68,3 +68,8 @@ After building, check startup, a new and existing config, all 16 powder colors,
 splash/transform effects, water consumption on/off, permissions, stack merging,
 picking powder up during conversion, `/concretemixer reload`, and claimed
 cauldrons if you use protection plugins. Confirm item counts are preserved.
+
+## Versioning
+
+Releases use `<Minecraft version>.<plugin revision>`.
+For example, `26.3.1` is the first plugin release for Minecraft 26.3.
